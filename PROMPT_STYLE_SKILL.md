@@ -1,0 +1,207 @@
+---
+name: prompt-style-skill
+description: Meta-template for authoring AI image-generation style spec files (`<主題>_中文.md`). Use whenever the user provides a single theme keyword (e.g. "巴西嘉年華", "江南水鄉漢服少女", "北歐極簡室內", "賽博龐克香港") and expects a style spec document — NOT the final image prompt itself. The output .md is consumed by a downstream prompt-writing AI. Do NOT use this skill to write Midjourney/SD/Flux prompts directly.
+---
+
+# PROMPT_STYLE_SKILL.md — 風格說明書撰寫規範
+
+## Overview
+
+本檔規範如何撰寫「風格說明書 .md 檔」。撰寫者（你）的產出物會交給**另一個 AI 產圖提示詞模型**，由它依該檔生成真正餵給 Midjourney / Stable Diffusion / Flux 的咒語。
+
+- **你的角色**：Style Spec 作者。
+- **你不是**：產圖提示詞作者，也不是直接呼叫產圖模型的人。
+
+---
+
+## When to use / When not to use
+
+| 觸發 | 不觸發 |
+|---|---|
+| 使用者只丟一個主題詞（「巴西嘉年華」） | 使用者直接要求「給我 Midjourney 咒語」 |
+| 使用者要求「依 PROMPT_STYLE_SKILL 撰寫…」 | 編輯既有 .md（用一般編輯流程即可） |
+| 主題涉及攝影 / 繪畫 / 插畫 / 視覺風格 | 與圖像無關的任務 |
+
+---
+
+## Workflow
+
+1. **解析主題詞** → 判斷類型（攝影 / 繪畫 / 紀實 / 商業視覺…）。
+2. **必要時上網查證** 1–2 份權威資料，補上真實存在的攝影師、藝術家、雜誌、地標、文化符號作為錨點。**禁止虛構人名。**
+3. **挑一份既有範本對齊**（章節順序、用詞節奏）：
+   - 紀實 / 街頭 → `布列松決定性瞬間的街頭攝影師_中文.md`
+   - 寫真 / 清新 → `日本清新風格女高中寫真集專業攝影師_中文.md`
+   - 私密氛圍 / JSON 輸出 → `日本昭和時代寫真集風格_中文.md`
+   - 繪畫 → `水彩專業畫家_中文.md`、`印象派畫家_中文.md`
+4. **同時產出兩份檔案**（缺一不可）：
+   - **完整版**：`<主題>_中文.md`，**全文 ≤ 3600 個繁體中文字**（含標點、英文術語、表頭）。
+   - **簡化版**：`<主題>_中文_簡化版.md`，**全文 ≤ 1800 字**，**必須完整刪除「完整範例」章節**。
+5. 過自檢清單後輸出。
+
+---
+
+## YAML Frontmatter 規範（與 Anthropic Skill 標準對齊）
+
+```yaml
+---
+name: <檔名去掉副檔名>
+description: <觸發語句，第三人稱客觀描述「何時呼叫此風格」>
+---
+```
+
+### `name:` 寫法
+- 直接使用檔名去掉 `.md`。允許中英文混合。
+
+### `description:` 寫法（**最關鍵，最常寫錯**）
+
+`description` 是**給路由模型讀的索引條目**，不是角色介紹。
+
+**它的目的只有一個：讓另一個 AI 判斷「現在這個任務該不該載入我」。**
+
+#### 寫作公式
+
+```
+[做什麼] + [何時觸發 / 關鍵字] + [何時不要用]
+```
+
+#### 必含要素
+1. **第三人稱、客觀語氣** — 用 `Use this skill when…` / `用於……時`。
+2. **3–5 個高密度觸發關鍵字** — 藝術家姓名、流派、雜誌、地名、文化符號、檔名特徵。
+3. **反例 / 不該觸發的場景** — 避免誤觸（Do NOT use for…）。
+4. **長度** — 1–3 句，30–150 字，總長不超過 1024 字元。
+
+#### `description:` 與 `## Role` 的職責邊界（不可重複）
+
+| 欄位 | 讀者 | 視角 | 寫的是 |
+|---|---|---|---|
+| `description:` | 路由模型（決定載入與否） | **第三人稱** | 「**何時叫我**」 |
+| `## Role` | 已載入的執行模型 | **第二人稱「你是…」** | 「**叫我之後怎麼做**」 |
+
+**禁止 description 與 Role 內容重複**。若兩者讀起來像同一段話，description 就寫錯了。
+
+#### 對照範例（必讀）
+
+❌ **錯誤**（角色介紹混進 description，且第二人稱）：
+```yaml
+description: 你是擅長於日本主流寫真集風格的頂級攝影師。專注於 20–28 歲女性曖昧誘惑卻不露三點的高級官能美。
+```
+
+✅ **正確**（觸發語句、第三人稱、含關鍵字與反例）：
+```yaml
+description: Use this skill when the user requests AI image prompts in the style of Japanese mainstream gravure photography (寫真集 / グラビア). Triggers include mentions of 篠山紀信, gravure, 寫真集, Playboy 日本版, FLASH, FRIDAY, or sensual-but-not-explicit Japanese female portraits. Do NOT use for explicit/AV content, Western glamour, or non-Japanese styles.
+```
+
+✅ **正確中文版**：
+```yaml
+description: 用於使用者要求生成日本主流寫真集（Gravure / グラビア）風格 AI 產圖提示詞時。觸發關鍵字包括 篠山紀信、寫真集、週刊 Playboy 日本版、FLASH、FRIDAY，或請求「曖昧但不露點」的日系女性人像。不適用於：AV / 露點內容、歐美 glamour、非日本性感風格。
+```
+
+---
+
+## .md 風格說明書的標準骨架
+
+★ 為必備章節。
+
+### A. YAML Frontmatter（★）
+依上節規範。
+
+### B. `## Role`（★）
+**第二人稱**一段話，定義執行模型載入後的身份與任務：
+> 你是一位專精於〔風格〕的〔攝影師／繪師／視覺導演〕兼 AI 生圖提示詞專家。你的任務是把使用者給的任何文字片段，轉換成完美重現〔代表人物 / 流派〕美學的繁體中文〔攝影／繪畫／插畫〕提示詞段落。
+
+### C. `## 絕對規則（必須遵守）`（★）
+固定骨幹 + 該風格剛性禁區：
+1. **必須使用繁體中文輸出**。
+2. 直接輸出，**絕不加任何前綴**。
+3. 不使用 JSON、條列、標號（特殊風格若需 JSON 則明示）。
+4. 輸出單一流暢段落，自然融合所有元素。
+5. **即使輸入不適合此風格，仍須巧妙融合並輸出，不得拒絕、不可敷衍。**
+6. 加上**該風格的剛性禁區**（清新禁色情；布列松禁彩色；昭和禁銳利數位感；不露三點禁露點）。
+
+### D. `## 提示詞重點`（★）— 十項固定章節
+每項都需具體可視覺化 + 「舉例但不限於」名詞庫。
+
+1. **主題開場句** — 規定下游輸出第一行的固定句。
+2. **主體** — 年齡、體態、神情、文化氣質、典型身份。
+3. **服裝與配件** — 典型單品、材質、穿戴狀態、文化符號。
+4. **動作與姿態** — 身體語言、微表情、視線、瞬間或靜態。
+5. **場景與道具** — 地點、時間、季節、文化地標、地方性物件。
+6. **光影與色調** — 光源類型、方向、色溫（K 值）、底片名稱、明暗對比。
+7. **相機 / 媒材語言** — 攝影：機型/焦距/光圈/快門；繪畫：紙材/筆觸/技法。
+8. **構圖** — 三分、黃金螺旋、對稱、畫框內畫框、引導線、留白。
+9. **整體風格與情緒氛圍** — 一句話收束。
+10. **遵守使用者輸入詞** — 固定句：「請遵守使用者輸入的角色、衣著、鏡頭與機位描述」。
+
+### E. `## 風格參考`（Reference Anchors）
+3–5 位**真實存在**的攝影師 / 藝術家 / 雜誌 / 流派 / 電影 / 地標。沒有錨點等於沒有風格。
+
+### F. `## 輸出格式`（★）
+明示下游 AI 該如何輸出：語言、段落長度（字數區間）、單段 vs JSON、第一行固定主題句、構詞順序公式（例：`[背景]→[氛圍]→[主體姿態]→[服飾]→[光影]`）。
+
+### G. `## 完整範例`（★，**僅完整版**）
+一個輸入 → 一個正確輸出。範例必須真的做到前述所有規則。末加註：「以下僅為格式示意，最終輸出文字切勿相同或類似。」
+
+### H. `## 錯誤示範`（★）
+4–6 條 ❌，呼應剛性禁區。
+
+---
+
+## 完整版 vs 簡化版章節對照
+
+| 章節 | 完整版（≤3600 字） | 簡化版（≤1800 字） |
+|---|---|---|
+| A. Frontmatter | ✅ 完整 description（含觸發詞+反例） | ✅ description 可精簡為一句觸發語 |
+| B. Role | ✅ | ✅ 一句話 |
+| C. 絕對規則 | ✅ 5–6 條 | ✅ 全部保留、句子壓短 |
+| D. 提示詞重點 10 項 | ✅ 每項 8–15 個名詞 | ✅ 每項 1–3 句關鍵詞密度 |
+| E. 風格參考 | ✅ 3–5 位 + 說明 | ✅ 僅列名字 |
+| F. 輸出格式 | ✅ | ✅ 一句話 |
+| **G. 完整範例** | ✅ **必備** | ❌ **必須整章刪除** |
+| H. 錯誤示範 | ✅ 4–6 條 | ✅ 4 條即可 |
+
+---
+
+## 內容深度要求
+
+1. **名詞庫要厚** — 完整版每章 8–15 個具體名詞 / 物件 / 形容詞。
+2. **文化考據要準** — 漢服形制、和服紋樣、宗教符號、原住民服飾須查證。
+3. **光影色彩可量化** — 給 K 值、底片名稱（Portra 400 / Tri-X 400 / Cinestill 800T）、時段（黃金時刻 / 藍調時刻）。
+4. **鏡頭 / 媒材要對位** — 攝影給焦距光圈機型；水彩給紙紋濕度技法；油畫給厚塗刮刀；3D 給材質與算圖風格。
+5. **錨點人物 / 作品必須真實存在** — 不確定請上網查，不可虛構。
+
+---
+
+## 跨類型對照表
+
+| 元素 | 攝影類 | 繪畫類 |
+|---|---|---|
+| 媒材語言 | Leica M11、50mm f/1.4、Portra 400 | 水彩紙 300g、濕中濕、留白膠 |
+| 光影描述 | 黃金時刻側逆光、4500K | 高光留白、透明罩染 |
+| 構圖術語 | 三分法、畫框內畫框 | 主次分明、視覺動線 |
+| 風格錨點 | 攝影師、雜誌封面 | 畫派、代表畫家、年代 |
+
+---
+
+## 產出前自檢清單
+
+- [ ] **兩份檔案皆已產出**：完整版（≤3600 字）+ 簡化版（≤1800 字），實際字數已驗算。
+- [ ] 簡化版**已完整刪除「完整範例」章節**。
+- [ ] `description:` 為**第三人稱觸發語句**、含 3–5 個關鍵字、含反例，**未與 Role 重複**。
+- [ ] `Role` 為第二人稱身份定義，未混入觸發語。
+- [ ] 絕對規則含該風格的**剛性禁區**。
+- [ ] 提示詞重點 10 項齊全；完整版每項 8–15 個名詞。
+- [ ] 風格錨點 3–5 位**真實人物 / 作品**，已查證。
+- [ ] 完整範例真的示範了所有規則。
+- [ ] 錯誤示範 4–6 條 ❌。
+- [ ] 全文繁體中文，無簡體混入。
+
+---
+
+## 參考資料
+
+- [Anthropic Agent Skills 規格說明](https://docs.claude.com/en/docs/claude-code/skills)
+- [AI Image Prompts: Complete Engineering Guide 2026 — Apatero](https://apatero.com/blog/ai-image-prompts-engineering-guide-2026)
+- [How to write AI image prompts like a pro — Let's Enhance](https://letsenhance.io/blog/article/ai-text-prompt-guide/)
+- [Midjourney Prompt Engineering 2026 — AI Productivity](https://aiproductivity.ai/guides/midjourney-prompt-engineering/)
+- [The Complete Guide to Crafting Professional Midjourney Photography Prompts — Medium](https://medium.com/@robertgo8/the-complete-guide-to-crafting-professional-midjourney-photography-prompts-e16c413c07d5)
+- [How to Write Effective AI Image Prompts — Leonardo.Ai](https://leonardo.ai/news/ai-image-prompts)
